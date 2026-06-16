@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ 王者英语竞速挑战</title>
+<style>
+:root {
+  --gold: #d4af37; --gold-light: #f0d878; --gold-dark: #8b6914;
+  --bg-dark: #0a0a0f; --bg-card: rgba(20,20,35,0.85);
+  --green: #00ff88; --red: #ff4444; --text: #e0e0e0;
+  --border-glow: 0 0 15px rgba(212,175,55,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+  background:var(--bg-dark); color:var(--text);
+  min-height:100vh; overflow-x:hidden;
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(212,175,55,0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139,105,20,0.05) 0%, transparent 50%);
+}
+.particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+.particle { position:absolute; width:2px; height:2px; background:var(--gold); border-radius:50%; opacity:0.3; animation:float 15s infinite; }
+@keyframes float { 0%,100%{transform:translateY(100vh) rotate(0deg);opacity:0} 10%{opacity:0.3} 90%{opacity:0.3} 100%{transform:translateY(-100vh) rotate(720deg)} }
+.page { display:none; position:relative; z-index:1; min-height:100vh; padding:20px; }
+.page.active { display:block; animation:fadeIn 0.5s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.container { max-width:900px; margin:0 auto; }
+.glass-card {
+  background:var(--bg-card); backdrop-filter:blur(20px);
+  border:1px solid rgba(212,175,55,0.2); border-radius:16px; padding:30px;
+  box-shadow:var(--border-glow), 0 8px 32px rgba(0,0,0,0.4);
+  position:relative; overflow:hidden;
+}
+.glass-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.btn-gold {
+  background:linear-gradient(135deg,#d4af37 0%,#f0d878 50%,#8b6914 100%);
+  color:#1a1a2e; border:none; padding:16px 40px; font-size:1.1rem; font-weight:bold;
+  border-radius:12px; cursor:pointer; transition:all 0.3s ease;
+  box-shadow:0 4px 15px rgba(212,175,55,0.3); text-transform:uppercase; letter-spacing:1px;
+  position:relative; overflow:hidden;
+}
+.btn-gold::after { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:linear-gradient(45deg,transparent,rgba(255,255,255,0.3),transparent); transform:rotate(45deg); transition:all 0.5s; }
+.btn-gold:hover { transform:translateY(-3px); box-shadow:0 8px 25px rgba(212,175,55,0.5); }
+.btn-gold:hover::after { left:100%; }
+.btn-gold:active { transform:translateY(-1px); }
+.btn-secondary { background:transparent; color:var(--gold); border:2px solid var(--gold); padding:12px 30px; font-size:1rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease; }
+.btn-secondary:hover { background:rgba(212,175,55,0.1); transform:translateY(-2px); }
+.home-title { text-align:center; margin-bottom:50px; padding-top:40px; }
+.home-title h1 { font-size:3rem; background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-shadow:0 0 30px rgba(212,175,55,0.3); margin-bottom:10px; letter-spacing:3px; }
+.home-title p { color:rgba(224,224,224,0.6); font-size:1.1rem; }
+.bank-selector { display:flex; justify-content:center; gap:20px; margin-bottom:40px; flex-wrap:wrap; }
+.bank-btn { padding:12px 30px; border:2px solid rgba(212,175,55,0.3); background:rgba(0,0,0,0.3); color:var(--text); border-radius:10px; cursor:pointer; font-size:1rem; transition:all 0.3s; }
+.bank-btn.active { border-color:var(--gold); background:rgba(212,175,55,0.15); color:var(--gold-light); box-shadow:0 0 15px rgba(212,175,55,0.2); }
+.bank-btn:hover:not(.active) { border-color:rgba(212,175,55,0.5); }
+.mode-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:30px; margin-top:40px; }
+.mode-card { background:var(--bg-card); border:1px solid rgba(212,175,55,0.15); border-radius:20px; padding:40px 30px; text-align:center; cursor:pointer; transition:all 0.4s ease; position:relative; overflow:hidden; }
+.mode-card::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,rgba(212,175,55,0.05),transparent); opacity:0; transition:opacity 0.3s; }
+.mode-card:hover { transform:translateY(-8px); border-color:rgba(212,175,55,0.4); box-shadow:0 15px 40px rgba(212,175,55,0.15); }
+.mode-card:hover::before { opacity:1; }
+.mode-icon { font-size:3.5rem; margin-bottom:20px; display:block; }
+.mode-card h3 { color:var(--gold-light); font-size:1.5rem; margin-bottom:10px; }
+.mode-card p { color:rgba(224,224,224,0.5); font-size:0.95rem; line-height:1.6; }
+.mode-card .btn-gold { margin-top:25px; width:100%; }
+.bank-badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:0.75rem; margin-bottom:15px; letter-spacing:1px; }
+.bank-badge.test { background:rgba(255,68,68,0.2); color:var(--red); border:1px solid rgba(255,68,68,0.3); }
+.bank-badge.practice { background:rgba(0,255,136,0.2); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
+.game-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px; }
+.stat-box { background:rgba(0,0,0,0.3); border:1px solid rgba(212,175,55,0.2); border-radius:12px; padding:12px 20px; text-align:center; min-width:120px; }
+.stat-label { font-size:0.75rem; color:rgba(224,224,224,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.stat-value { font-size:1.4rem; font-weight:bold; color:var(--gold-light); }
+.stat-value.danger { color:var(--red); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.timer-bar { width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin-bottom:25px; overflow:hidden; }
+.timer-fill { height:100%; background:linear-gradient(90deg,var(--green),var(--gold)); border-radius:3px; transition:width 1s linear; box-shadow:0 0 10px rgba(0,255,136,0.3); }
+.timer-fill.danger { background:linear-gradient(90deg,var(--gold),var(--red)); box-shadow:0 0 10px rgba(255,68,68,0.3); }
+.question-area { margin-bottom:30px; }
+.question-number { color:var(--gold); font-size:0.9rem; margin-bottom:15px; text-transform:uppercase; letter-spacing:2px; }
+.question-text { font-size:1.3rem; line-height:1.8; margin-bottom:25px; color:#fff; }
+.question-text .blank { display:inline-block; min-width:80px; border-bottom:2px solid var(--gold); margin:0 5px; text-align:center; color:var(--gold-light); }
+.options-grid { display:grid; gap:12px; }
+.option-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); padding:16px 20px; border-radius:12px; cursor:pointer; text-align:left; font-size:1.05rem; transition:all 0.3s ease; position:relative; overflow:hidden; }
+.option-btn:hover:not(.disabled) { background:rgba(212,175,55,0.1); border-color:rgba(212,175,55,0.3); transform:translateX(5px); }
+.option-btn.correct { background:rgba(0,255,136,0.15)!important; border-color:var(--green)!important; color:var(--green)!important; }
+.option-btn.wrong { background:rgba(255,68,68,0.15)!important; border-color:var(--red)!important; color:var(--red)!important; }
+.option-btn.disabled { cursor:not-allowed; opacity:0.7; }
+.option-label { display:inline-block; width:32px; height:32px; line-height:32px; text-align:center; background:rgba(212,175,55,0.2); border-radius:50%; margin-right:12px; font-weight:bold; color:var(--gold); }
+.fill-input-group { display:flex; gap:15px; align-items:center; flex-wrap:wrap; }
+.fill-input { flex:1; min-width:200px; background:rgba(0,0,0,0.3); border:2px solid rgba(212,175,55,0.3); color:#fff; padding:14px 20px; border-radius:10px; font-size:1.1rem; outline:none; transition:all 0.3s; }
+.fill-input:focus { border-color:var(--gold); box-shadow:0 0 15px rgba(212,175,55,0.2); }
+.fill-input.correct { border-color:var(--green); background:rgba(0,255,136,0.1); }
+.fill-input.wrong { border-color:var(--red); background:rgba(255,68,68,0.1); }
+.match-container { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.match-column { display:flex; flex-direction:column; gap:10px; }
+.match-item { background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.1); padding:14px; border-radius:10px; cursor:pointer; transition:all 0.3s; text-align:center; font-size:1rem; }
+.match-item:hover { border-color:rgba(212,175,55,0.4); background:rgba(212,175,55,0.05); }
+.match-item.selected { border-color:var(--gold); background:rgba(212,175,55,0.15); box-shadow:0 0 15px rgba(212,175,55,0.2); }
+.match-item.matched { border-color:var(--green); background:rgba(0,255,136,0.1); pointer-events:none; }
+.match-item.wrong-match { border-color:var(--red); background:rgba(255,68,68,0.1); animation:shake 0.5s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+.explanation { margin-top:25px; padding:20px; background:rgba(0,0,0,0.3); border-left:4px solid var(--gold); border-radius:0 12px 12px 0; display:none; }
+.explanation.show { display:block; animation:slideIn 0.4s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+.explanation h4 { color:var(--gold-light); margin-bottom:10px; font-size:1.1rem; }
+.explanation p { color:rgba(224,224,224,0.8); line-height:1.7; }
+.explanation .answer-highlight { color:var(--green); font-weight:bold; font-size:1.1rem; }
+.result-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:1000; display:none; justify-content:center; align-items:center; padding:20px; }
+.result-overlay.show { display:flex; animation:fadeIn 0.5s ease; }
+.result-card { background:var(--bg-card); border:2px solid var(--gold); border-radius:24px; padding:50px 40px; max-width:500px; width:100%; text-align:center; box-shadow:0 0 60px rgba(212,175,55,0.2); position:relative; overflow:hidden; }
+.result-card::before { content:'👑'; position:absolute; top:-20px; left:50%; transform:translateX(-50%); font-size:4rem; filter:drop-shadow(0 0 20px rgba(212,175,55,0.5)); }
+.result-title { font-size:2rem; color:var(--gold-light); margin:30px 0 20px; text-transform:uppercase; letter-spacing:3px; }
+.result-score { font-size:4rem; font-weight:bold; background:linear-gradient(135deg,var(--gold-light),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin:20px 0; }
+.result-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin:30px 0; }
+.result-stat { background:rgba(0,0,0,0.3); border-radius:12px; padding:15px; }
+.result-stat-value { font-size:1.8rem; font-weight:bold; color:var(--gold-light); }
+.result-stat-label { font-size:0.85rem; color:rgba(224,224,224,0.5); margin-top:5px; }
+.result-buttons { display:flex; gap:15px; justify-content:center; margin-top:30px; flex-wrap:wrap; }
+.back-btn { position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.4); border:1px solid rgba(212,175,55,0.3); color:var(--gold); padding:10px 20px; border-radius:8px; cursor:pointer; font-size:0.9rem; transition:all 0.3s; z-index:10; }
+.back-btn:hover { background:rgba(212,175,55,0.15); transform:translateX(-3px); }
+.countdown-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:999; display:none; justify-content:center; align-items:center; flex-direction:column; }
+.countdown-overlay.show { display:flex; }
+.countdown-number { font-size:8rem; font-weight:bold; color:var(--gold); text-shadow:0 0 40px rgba(212,175,55,0.5); animation:countPulse 1s ease; }
+@keyframes countPulse { 0%{transform:scale(2);opacity:0} 50%{transform:scale(1);opacity:1} 100%{transform:scale(1);opacity:1} }
+.countdown-text { font-size:1.5rem; color:rgba(224,224,224,0.6); margin-top:20px; }
+@media(max-width:768px) {
+  .home-title h1 { font-size:2rem; }
+  .mode-grid { grid-template-columns:1fr; gap:20px; }
+  .game-header { justify-content:center; }
+  .stat-box { min-width:100px; padding:10px 15px; }
+  .match-container { grid-template-columns:1fr; }
+  .result-stats { grid-template-columns:1fr; }
+  .glass-card { padding:20px; }
+  .question-text { font-size:1.1rem; }
+  .bank-selector { flex-direction:column; align-items:center; }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<div class="particles" id="particles"></div>
+
+<!-- ==================== 首页 ==================== -->
+<div class="page active" id="home-page">
+  <div class="container">
+    <div class="home-title">
+      <h1>⚔️ 王者英语竞速</h1>
+      <p>大学英语2 · 期末冲刺 · 5分钟极限闯关</p>
+    </div>
+    <div class="bank-selector">
+      <button class="bank-btn active" id="btn-test" onclick="selectBank('test')">📋 课堂测试题库（A卷）</button>
+      <button class="bank-btn" id="btn-practice" onclick="selectBank('practice')">📚 课后复习题库</button>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="startGame('choice')">
+        <span class="bank-badge test" id="badge-choice">课堂测试</span>
+        <span class="mode-icon">🎯</span>
+        <h3>语法选择题</h3>
+        <p id="desc-choice">反意疑问句、比较级、被动语态、情态动词等核心语法考点（A卷真题）</p>
+        <button class="btn-gold">立即挑战</button>
+      </div>
+      <div class="mode-card" onclick="startGame('fill')">
+        <span class="bank-badge test" id="badge-fill">课堂测试</span>
+        <span class="mode-icon">✏️</span>
+        <h3>语法填空题</h3>
+        <p id="desc-fill">比较级变形、被动语态、情态动词推测等语法填空训练（A卷真题）</p>
+        <button class="btn-gold">立即挑战</button>
+      </div>
+      <div class="mode-card" onclick="startGame('match')">
+        <span class="bank-badge test" id="badge-match">课堂测试</span>
+        <span class="mode-icon">🔗</span>
+        <h3>词汇匹配题</h3>
+        <p id="desc-match">英汉词汇配对，覆盖课程核心词汇与短语（A卷真题）</p>
+        <button class="btn-gold">立即挑战</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 语法选择题板块 ==================== -->
+<div class="page" id="choice-page">
+  <div class="container">
+    <button class="back-btn" onclick="goHome()">← 返回首页</button>
+    <div class="glass-card" style="margin-top:60px;">
+      <div class="timer-bar"><div class="timer-fill" id="choice-timer-bar"></div></div>
+      <div class="game-header">
+        <div class="stat-box"><div class="stat-label">当前得分</div><div class="stat-value" id="choice-score">0 / 100</div></div>
+        <div class="stat-box"><div class="stat-label">答题进度</div><div class="stat-value" id="choice-progress">0 / 10</div></div>
+        <div class="stat-box"><div class="stat-label">剩余时间</div><div class="stat-value" id="choice-timer">05:00</div></div>
+      </div>
+      <div class="question-area" id="choice-question-area"></div>
+      <div class="explanation" id="choice-explanation"><h4>📖 知识点解析</h4><p id="choice-explanation-text"></p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 语法填空题板块 ==================== -->
+<div class="page" id="fill-page">
+  <div class="container">
+    <button class="back-btn" onclick="goHome()">← 返回首页</button>
+    <div class="glass-card" style="margin-top:60px;">
+      <div class="timer-bar"><div class="timer-fill" id="fill-timer-bar"></div></div>
+      <div class="game-header">
+        <div class="stat-box"><div class="stat-label">当前得分</div><div class="stat-value" id="fill-score">0 / 100</div></div>
+        <div class="stat-box"><div class="stat-label">答题进度</div><div class="stat-value" id="fill-progress">0 / 10</div></div>
+        <div class="stat-box"><div class="stat-label">剩余时间</div><div class="stat-value" id="fill-timer">05:00</div></div>
+      </div>
+      <div class="question-area" id="fill-question-area"></div>
+      <div class="explanation" id="fill-explanation"><h4>📖 知识点解析</h4><p id="fill-explanation-text"></p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 词汇匹配题板块 ==================== -->
+<div class="page" id="match-page">
+  <div class="container">
+    <button class="back-btn" onclick="goHome()">← 返回首页</button>
+    <div class="glass-card" style="margin-top:60px;">
+      <div class="timer-bar"><div class="timer-fill" id="match-timer-bar"></div></div>
+      <div class="game-header">
+        <div class="stat-box"><div class="stat-label">当前得分</div><div class="stat-value" id="match-score">0 / 100</div></div>
+        <div class="stat-box"><div class="stat-label">答题进度</div><div class="stat-value" id="match-progress">0 / 10</div></div>
+        <div class="stat-box"><div class="stat-label">剩余时间</div><div class="stat-value" id="match-timer">05:00</div></div>
+      </div>
+      <div class="question-area" id="match-question-area"></div>
+      <div class="explanation" id="match-explanation"><h4>📖 知识点解析</h4><p id="match-explanation-text"></p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 结算面板 ==================== -->
+<div class="result-overlay" id="result-overlay">
+  <div class="result-card">
+    <div class="result-title" id="result-title">闯关完成</div>
+    <div class="result-score" id="result-score">85</div>
+    <div style="color:var(--gold);font-size:1.2rem;margin-bottom:20px;">分</div>
+    <div class="result-stats">
+      <div class="result-stat"><div class="result-stat-value" id="result-correct" style="color:var(--green);">8</div><div class="result-stat-label">答对</div></div>
+      <div class="result-stat"><div class="result-stat-value" id="result-wrong" style="color:var(--red);">2</div><div class="result-stat-label">答错</div></div>
+      <div class="result-stat"><div class="result-stat-value" id="result-rate">80%</div><div class="result-stat-label">正确率</div></div>
+    </div>
+    <div class="result-buttons">
+      <button class="btn-gold" onclick="restartGame()">🔄 重新闯关</button>
+      <button class="btn-secondary" onclick="goHome()">🏠 返回首页</button>
+    </div>
+  </div>
+</div>
+
+<div class="countdown-overlay" id="countdown-overlay">
+  <div class="countdown-number" id="countdown-number">3</div>
+  <div class="countdown-text">准备开始...</div>
+</div>
+
+<script>
+// ==================== 关键参数配置 ====================
+const CONFIG = {
+  TOTAL_TIME: 300,
+  TOTAL_SCORE: 100,
+  BASE_SCORE_PER_QUESTION: 10,
+  SPEED_BONUS_MAX: 5,
+};
+let currentBank = 'test';
+function selectBank(bank) {
+  currentBank = bank;
+  document.querySelectorAll('.bank-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + bank).classList.add('active');
+  const badges = document.querySelectorAll('.bank-badge');
+  badges.forEach(b => {
+    b.className = 'bank-badge ' + bank;
+    b.textContent = bank === 'test' ? '课堂测试' : '课后复习';
+  });
+  document.getElementById('desc-choice').textContent = bank === 'test'
+    ? '反意疑问句、比较级、被动语态、情态动词等核心语法考点（A卷真题）'
+    : 'would rather、had better、情态动词推测、反意疑问句、比较级、被动语态等（复习题）';
+  document.getElementById('desc-fill').textContent = bank === 'test'
+    ? '比较级变形、被动语态、情态动词推测等语法填空训练（A卷真题）'
+    : '比较级、被动语态、情态动词等语法填空（复习题）';
+  document.getElementById('desc-match').textContent = bank === 'test'
+    ? '英汉词汇配对，覆盖课程核心词汇与短语（A卷真题）'
+    : '英汉词汇配对，覆盖课程核心词汇与短语（复习题）';
+}
+
+// ==================== 课堂测试题库（A卷真题） ====================
+const testChoiceQuestions = [
+{question:"She is a college student, ______?",options:["is she","does she","isn't she","doesn't she"],answer:2,explanation:"反意疑问句遵循'前肯后否'原则。主句用be动词is，疑问部分用isn't she。"},
+{question:"They are reading books now, ______?",options:["are they","don't they","do they","aren't they"],answer:3,explanation:"反意疑问句遵循'前肯后否'原则。主句用are，疑问部分用aren't they。"},
+{question:"Ben would help if he could, ______?",options:["would he","wouldn't he","will he","he would"],answer:1,explanation:"反意疑问句遵循'前肯后否'原则。主句用would，疑问部分用wouldn't he。"},
+{question:"We are having steak for dinner tonight, ______?",options:["won't we","will we","aren't we","are we"],answer:2,explanation:"反意疑问句遵循'前肯后否'原则。主句用are，疑问部分用aren't we。"},
+{question:"This cake tastes ______ than that one.",options:["nicer","nicest","nice","/"],answer:0,explanation:"than是比较级的标志词，taste是系动词，后面接形容词比较级nicer。"},
+{question:"She always comes to class the ______.",options:["early","earlier","most early","earliest"],answer:3,explanation:"定冠词the后面接最高级，early的最高级是earliest（以y结尾变i加est）。"},
+{question:"Tracy is ______ than Jane.",options:["beautiful","most beautiful","more beautiful","much beautiful"],answer:2,explanation:"than是比较级标志，多音节形容词beautiful的比较级在前面加more。"},
+{question:"That was the ______ movie I have ever seen.",options:["most boring","more boring","boring","much boring"],answer:0,explanation:"'I have ever seen'表示范围，用最高级。多音节形容词boring的最高级是most boring。"},
+{question:"These flowers ______ every morning.",options:["are watered","waters","water","is watering"],answer:0,explanation:"flowers是被浇水的对象，用被动语态。every morning表示一般现在时，所以用are watered。"},
+{question:"We ______ better leave now. The traffic will be bad later.",options:["have","had","are","would"],answer:1,explanation:"had better do sth. 是固定搭配，表示'最好做某事'。"},
+{question:"Jenny ______ rather see a comedy than a horror movie.",options:["would","had","has","is"],answer:0,explanation:"would rather do A than do B 是固定句型，表示'宁愿做A而不愿做B'。"},
+{question:"Hadn't you better ______ your money?",options:["saved","/","saving","save"],answer:3,explanation:"had better后面接动词原形，否定疑问句Hadn't you better...?同样接动词原形save。"},
+{question:"Simon ______ have got stuck in traffic.",options:["will","could","has","had"],answer:1,explanation:"could have done表示对过去情况的推测，'可能被困在交通中了'。"},
+{question:"She ______ have got the job. I am not sure.",options:["will","can","might","must"],answer:2,explanation:"I am not sure表示不确定，might have done表示'可能做了某事'，语气较弱。"},
+{question:"Joseph must have ______ about the party.",options:["forget","forgot","forgetting","forgotten"],answer:3,explanation:"must have done是对过去的肯定推测，后面接过去分词。forget的过去分词是forgotten。"},
+{question:"He ______ rather go swimming than go for a hike.",options:["has","is","would","had"],answer:2,explanation:"would rather do A than do B 是固定句型，表示'宁愿做A而不愿做B'。"},
+{question:"The classroom ______ every day.",options:["clean","is cleaned","cleans","cleaned"],answer:1,explanation:"classroom是被打扫的对象，用被动语态。every day表示一般现在时，所以用is cleaned。"},
+{question:"Tom runs ______ than his brother.",options:["fast","the fastest","fastest","faster"],answer:3,explanation:"than是比较级标志，fast是单音节词，比较级直接加er，即faster。"},
+{question:"A new book ______ by my father last week.",options:["is written","wrote","was written","write"],answer:2,explanation:"book是被写的对象，用被动语态。last week表示一般过去时，所以用was written。"},
+{question:"How much ______.",options:["they do cost","do they cost","cost do they","they cost do"],answer:1,explanation:"特殊疑问句结构：特殊疑问词 + 一般疑问句语序（助动词do提前），即do they cost。"}
+];
+
+const testFillQuestions = [
+{question:"You speak English far ______ (fluently) than others.",answer:"more fluently",explanation:"than是比较级标志。fluently是多音节副词，比较级在前面加more。far修饰比较级表示程度。"},
+{question:"The water ______ (deliver) tomorrow.",answer:"will be delivered",explanation:"tomorrow表示一般将来时。water是被运送的对象，用被动语态。将来时被动语态结构：will be + 过去分词。"},
+{question:"The movie ______ (see) by Simon yesterday.",answer:"was seen",explanation:"yesterday表示一般过去时。movie是被看的对象，用被动语态。过去时被动语态结构：was/were + 过去分词。"},
+{question:"Ellie ______ (can't/ must) have gone to the beach. She hates being in the sun.",answer:"can't",explanation:"She hates being in the sun说明她不可能去海滩。can't have done表示对过去的否定推测'不可能做了某事'。"},
+{question:"The weather is ______ (bad) today than it was yesterday.",answer:"worse",explanation:"than是比较级标志。bad是不规则形容词，比较级为worse，最高级为worst。"}
+];
+
+const testMatchQuestions = [
+{pairs:[{word:"assignment",meaning:"任务"},{word:"passport",meaning:"护照"},{word:"driver's license",meaning:"驾照"},{word:"identification",meaning:"身份证明"},{word:"checking account",meaning:"支票账户"}],explanation:"assignment（任务）、passport（护照）、driver's license（驾照）、identification（身份证明）、checking account（支票账户）—— 均为A卷翻译部分核心词汇。"},
+{pairs:[{word:"stick to",meaning:"坚持"},{word:"regularly service",meaning:"定期检修"},{word:"Internet hit",meaning:"网络热点"},{word:"social media",meaning:"社交媒体"},{word:"electricity fee",meaning:"电费"}],explanation:"stick to（坚持）、regularly service（定期检修）、Internet hit（网络热点）、social media（社交媒体）、electricity fee（电费）—— 注意service在此处为动词'检修'。"},
+{pairs:[{word:"amusing jokes",meaning:"幽默笑话"},{word:"investor",meaning:"投资者"},{word:"deadline",meaning:"截止日期"},{word:"nightmare",meaning:"噩梦"},{word:"save money",meaning:"存钱"}],explanation:"amusing jokes（幽默笑话）、investor（投资者）、deadline（截止日期）、nightmare（噩梦）、save money（存钱）—— deadline由dead（死）+ line（线）构成，形象表示'最后期限'。"}
+];
+
+// ==================== 课后复习题库（复习题文档） ====================
+const practiceChoiceQuestions = [
+{question:"Jenny ______ rather see a comedy than a horror movie.",options:["would","had","has","is"],answer:0,explanation:"would rather do A than do B 是固定句型，表示'宁愿做A而不愿做B'。"},
+{question:"He ______ rather go swimming than go for a hike.",options:["has","is","would","had"],answer:2,explanation:"would rather do A than do B 是固定句型，表示'宁愿做A而不愿做B'。"},
+{question:"Hadn't you better ______ your money?",options:["saved","/","saving","save"],answer:3,explanation:"had better后面接动词原形，否定疑问句Hadn't you better...?同样接动词原形save。"},
+{question:"We ______ better leave now. The traffic will be bad later.",options:["have","had","are","would"],answer:1,explanation:"had better do sth. 是固定搭配，表示'最好做某事'。"},
+{question:"Simon ______ have got stuck in traffic.",options:["will","could","has","had"],answer:1,explanation:"could have done表示对过去情况的推测，'可能被困在交通中了'。"},
+{question:"She ______ have got the job. I am not sure.",options:["will","can","might","must"],answer:2,explanation:"I am not sure表示不确定，might have done表示'可能做了某事'，语气较弱。"},
+{question:"He ______ be at home; the light is on.",options:["must","can","might","would"],answer:0,explanation:"the light is on是肯定证据，must表示肯定推测'一定在家'。"},
+{question:"They ______ finished the work yesterday, but I'm not sure.",options:["must have","might have","should have","would have"],answer:1,explanation:"I'm not sure表示不确定，might have done表示对过去的不确定推测'可能已经完成了'。"},
+{question:"She ______ be at the library; I saw her at the mall just now.",options:["can't","mustn't","may not","wouldn't"],answer:0,explanation:"I saw her at the mall just now是否定证据，can't表示否定推测'不可能在图书馆'。注意mustn't表示'禁止'，不表推测。"},
+{question:"Joseph must have ______ about the party.",options:["forget","forgot","forgetting","forgotten"],answer:3,explanation:"must have done是对过去的肯定推测，后面接过去分词。forget的过去分词是forgotten。"},
+{question:"Lucy studies ______ than her twin sister.",options:["hard","harder","hardest","the hard"],answer:1,explanation:"than是比较级标志，hard是单音节词，比较级直接加er，即harder。"},
+{question:"Mike swims ______ than any other boy.",options:["far","farther","farthest","the farther"],answer:1,explanation:"than是比较级标志，far表示距离时比较级为farther，最高级为farthest。"},
+{question:"It rains ______ this autumn than last autumn.",options:["terribly","more terribly","most terribly","terrible"],answer:1,explanation:"than是比较级标志。terribly是多音节副词，比较级在前面加more。"},
+{question:"This cake tastes ______ than that one.",options:["nicer","nicest","nice","/"],answer:0,explanation:"than是比较级的标志词，taste是系动词，后面接形容词比较级nicer。"},
+{question:"Tracy is ______ than Jane.",options:["beautiful","most beautiful","more beautiful","much beautiful"],answer:2,explanation:"than是比较级标志，多音节形容词beautiful的比较级在前面加more。"},
+{question:"This problem is ______ than the previous one.",options:["far difficult","more far difficult","far more difficult","much difficult"],answer:2,explanation:"difficult是多音节形容词，比较级用more difficult。far修饰比较级表示程度'...得多'，放在more前面。"},
+{question:"His health is getting ______ than before.",options:["worse","bad","the worst","more bad"],answer:0,explanation:"than是比较级标志。bad是不规则形容词，比较级为worse，最高级为worst。"},
+{question:"Tom runs ______ than his brother.",options:["fast","the fastest","fastest","faster"],answer:3,explanation:"than是比较级标志，fast是单音节词，比较级直接加er，即faster。"},
+{question:"Who draws ______ in your class?",options:["carefully","more carefully","most carefully","careful"],answer:2,explanation:"in your class表示范围，用最高级。carefully是多音节副词，最高级在前面加most。"},
+{question:"Among the three runners, Jack runs ______.",options:["fast","faster","fastest","more fast"],answer:2,explanation:"Among the three表示三者比较，用最高级。fast是单音节词，最高级直接加est。"},
+{question:"She always comes to class the ______.",options:["early","earlier","most early","earliest"],answer:3,explanation:"定冠词the后面接最高级，early的最高级是earliest（以y结尾变i加est）。"},
+{question:"That was the ______ movie I have ever seen.",options:["most boring","more boring","boring","much boring"],answer:0,explanation:"'I have ever seen'表示范围，用最高级。多音节形容词boring的最高级是most boring。"},
+{question:"She is ______ person I know.",options:["the kindest","the most kindest","kindest","most kind"],answer:0,explanation:"kind是单音节形容词，最高级为kindest。最高级前面必须加the，即the kindest。"},
+{question:"He runs ______ among all the students.",options:["fastest","faster","fast","the fast"],answer:0,explanation:"among all the students表示范围，用最高级。fast的最高级是fastest，副词最高级前面的the可以省略。"},
+{question:"These flowers ______ every morning.",options:["are watered","waters","water","is watering"],answer:0,explanation:"flowers是被浇水的对象，用被动语态。every morning表示一般现在时，所以用are watered。"},
+{question:"The classroom ______ every day.",options:["clean","is cleaned","cleans","cleaned"],answer:1,explanation:"classroom是被打扫的对象，用被动语态。every day表示一般现在时，所以用is cleaned。"},
+{question:"These computers ______ in China.",options:["are made","make","made","is made"],answer:0,explanation:"computers是被制造的对象，用被动语态。主语是复数，一般现在时被动语态用are made。"},
+{question:"A new book ______ by my father last week.",options:["is written","wrote","was written","write"],answer:2,explanation:"book是被写的对象，用被动语态。last week表示一般过去时，所以用was written。"},
+{question:"The letter ______ by her last night.",options:["wrote","was written","is written","writes"],answer:1,explanation:"letter是被写的对象，用被动语态。last night表示一般过去时，所以用was written。"},
+{question:"The bridge ______ at the moment.",options:["is building","is being built","built","builds"],answer:1,explanation:"at the moment表示现在进行时。bridge是被建造的对象，用现在进行时被动语态：is being built。"},
+{question:"The meeting ______ next Monday.",options:["will hold","will be held","is held","holds"],answer:1,explanation:"next Monday表示一般将来时。meeting是被举行的对象，用将来时被动语态：will be held。"},
+{question:"She is a college student, ______?",options:["is she","does she","isn't she","doesn't she"],answer:2,explanation:"反意疑问句遵循'前肯后否'原则。主句用be动词is，疑问部分用isn't she。"},
+{question:"They are reading books now, ______?",options:["are they","don't they","do they","aren't they"],answer:3,explanation:"反意疑问句遵循'前肯后否'原则。主句用are，疑问部分用aren't they。"},
+{question:"Ben would help if he could, ______?",options:["would he","wouldn't he","will he","he would"],answer:1,explanation:"反意疑问句遵循'前肯后否'原则。主句用would，疑问部分用wouldn't he。"},
+{question:"We are having steak for dinner tonight, ______?",options:["won't we","will we","aren't we","are we"],answer:2,explanation:"反意疑问句遵循'前肯后否'原则。主句用are，疑问部分用aren't we。"},
+{question:"He was late for school that morning, ______?",options:["wasn't he","was","did he","didn't he"],answer:0,explanation:"反意疑问句遵循'前肯后否'原则。主句用was，疑问部分用wasn't he。"},
+{question:"She will have lunch at school, ______?",options:["doesn't she","won't she","is she","will she"],answer:1,explanation:"反意疑问句遵循'前肯后否'原则。主句用will，疑问部分用won't she。"},
+{question:"She doesn't talk much, ______?",options:["is he","doesn't she","did she","does she"],answer:3,explanation:"反意疑问句遵循'前否后肯'原则。主句用doesn't否定，疑问部分用does she肯定。"},
+{question:"The computer is very useful to us, ______?",options:["isn't it","isn't the computer","does it","doesn't it"],answer:0,explanation:"反意疑问句遵循'前肯后否'原则。主句用is，疑问部分用isn't it（用it代替the computer）。"},
+{question:"There is going to be an English party this afternoon, ______?",options:["is there","is going there","isn't there","did there"],answer:2,explanation:"There be句型的反意疑问句，疑问部分用be动词+there。前肯后否，所以用isn't there。"},
+{question:"That is her dictionary, ______?",options:["isn't that","is that","does it","isn't it"],answer:3,explanation:"反意疑问句遵循'前肯后否'原则。主句用is，疑问部分用isn't it（用it代替that）。"},
+{question:"She has a brother and a sister, ______?",options:["hadn't she","has she","don't she","doesn't she"],answer:3,explanation:"has表示'有'时，反意疑问句可用doesn't she（英式）或hasn't she（美式），此处选doesn't she。"},
+{question:"He really must go now, ______?",options:["must he","doesn't he","mustn't he","needn't he"],answer:1,explanation:"must表示'必须'时，反意疑问句用needn't。但此处really must强调必要性，也可用doesn't he。根据教材习惯选doesn't he。"},
+{question:"You need a new bike, ______?",options:["don't you","do you","needn't you","need you"],answer:0,explanation:"need作实义动词时，反意疑问句用don't you。need作情态动词时才用needn't you。"},
+{question:"Mary lost her pen, ______?",options:["didn't she","didn't Mary","doesn't she","wasn't she"],answer:0,explanation:"反意疑问句遵循'前肯后否'原则。主句是一般过去时，用didn't she（不用didn't Mary，反意疑问句用人称代词）。"},
+{question:"You've never been to Paris, ______?",options:["have you","haven't you","do you","don't you"],answer:0,explanation:"never是否定词，主句视为否定句，遵循'前否后肯'原则，用have you。"},
+{question:"There is little water left in the bottle, ______?",options:["is there","isn't there","is it","isn't it"],answer:0,explanation:"little表示'几乎没有'，是否定词，主句视为否定句，遵循'前否后肯'原则，用is there。"},
+{question:"He hardly ever watches TV, ______?",options:["does he","doesn't he","is he","isn't he"],answer:0,explanation:"hardly ever表示'几乎不'，是否定词，主句视为否定句，遵循'前否后肯'原则，用does he。"},
+{question:"She seldom goes out at night, ______?",options:["does she","doesn't she","is she","isn't he"],answer:0,explanation:"seldom表示'很少'，是否定词，主句视为否定句，遵循'前否后肯'原则，用does she。"},
+{question:"How much ______.",options:["they do cost","do they cost","cost do they","they cost do"],answer:1,explanation:"特殊疑问句结构：特殊疑问词 + 一般疑问句语序（助动词do提前），即do they cost。"}
+];
+
+const practiceFillQuestions = [
+{question:"You speak English far ______ (fluently) than others.",answer:"more fluently",explanation:"than是比较级标志。fluently是多音节副词，比较级在前面加more。far修饰比较级表示程度。"},
+{question:"The weather is ______ (bad) today than it was yesterday.",answer:"worse",explanation:"than是比较级标志。bad是不规则形容词，比较级为worse，最高级为worst。"},
+{question:"His English is ______ (good) than mine.",answer:"better",explanation:"than是比较级标志。good是不规则形容词，比较级为better，最高级为best。"},
+{question:"Can't it be done ______ (quickly)?",answer:"more quickly",explanation:"此句是比较级疑问句。quickly是多音节副词，比较级在前面加more。"},
+{question:"This is ______ (interesting) movie I have ever watched.",answer:"the most interesting",explanation:"'I have ever watched'表示范围，用最高级。interesting是多音节形容词，最高级为the most interesting。"},
+{question:"It's the ______ (heavily) visited park in North America.",answer:"most heavily",explanation:"the + 最高级结构。heavily是多音节副词，最高级为most heavily，修饰visited。"},
+{question:"The water ______ (deliver) tomorrow.",answer:"will be delivered",explanation:"tomorrow表示一般将来时。water是被运送的对象，用被动语态。将来时被动语态结构：will be + 过去分词。"},
+{question:"The movie ______ (see) by Simon yesterday.",answer:"was seen",explanation:"yesterday表示一般过去时。movie是被看的对象，用被动语态。过去时被动语态结构：was/were + 过去分词。"},
+{question:"The house ______ (paint) at the moment.",answer:"is being painted",explanation:"at the moment表示现在进行时。house是被粉刷的对象，用现在进行时被动语态：is being + 过去分词。"},
+{question:"The old bridge ______ (build) in 1850.",answer:"was built",explanation:"in 1850表示一般过去时。bridge是被建造的对象，用被动语态。过去时被动语态：was/were + 过去分词。"},
+{question:"You ______ (must / might) be exhausted after that long run. You look really tired.",answer:"must",explanation:"You look really tired是肯定证据，must表示肯定推测'一定筋疲力尽了'。"},
+{question:"Ellie ______ (can't/ must) have gone to the beach. She hates being in the sun.",answer:"can't",explanation:"She hates being in the sun说明她不可能去海滩。can't have done表示对过去的否定推测'不可能做了某事'。"},
+{question:"She ______ (can't / must) have left already; her coat is still here.",answer:"can't",explanation:"her coat is still here是否定证据，说明她不可能已经离开。can't have done表示否定推测。"},
+{question:"They ______ (be) in the cafe, but I didn't see them.",answer:"might have been",explanation:"but I didn't see them表示不确定，might have been表示对过去的不确定推测'可能曾在咖啡馆'。"},
+{question:"Darren's not here. He ______ (get) lost.",answer:"might have got",explanation:"Darren不在，推测他可能迷路了。might have got lost表示对过去的不确定推测。"}
+];
+
+const practiceMatchQuestions = [
+{pairs:[{word:"assignment",meaning:"任务"},{word:"passport",meaning:"护照"},{word:"driver's license",meaning:"驾照"},{word:"identification",meaning:"身份证明"},{word:"checking account",meaning:"支票账户"}],explanation:"assignment（任务）、passport（护照）、driver's license（驾照）、identification（身份证明）、checking account（支票账户）—— 课程核心词汇。"},
+{pairs:[{word:"stick to",meaning:"坚持"},{word:"regularly service",meaning:"定期检修"},{word:"Internet hit",meaning:"网络热点"},{word:"social media",meaning:"社交媒体"},{word:"electricity fee",meaning:"电费"}],explanation:"stick to（坚持）、regularly service（定期检修）、Internet hit（网络热点）、social media（社交媒体）、electricity fee（电费）。"},
+{pairs:[{word:"amusing jokes",meaning:"幽默笑话"},{word:"investor",meaning:"投资者"},{word:"deadline",meaning:"截止日期"},{word:"nightmare",meaning:"噩梦"},{word:"save money",meaning:"存钱"}],explanation:"amusing jokes（幽默笑话）、investor（投资者）、deadline（截止日期）、nightmare（噩梦）、save money（存钱）。"},
+{pairs:[{word:"post",meaning:"发布"},{word:"factor",meaning:"因素"},{word:"procrastinate",meaning:"拖延"},{word:"realistic",meaning:"现实的"},{word:"quote",meaning:"引用"}],explanation:"post（发布）、factor（因素）、procrastinate（拖延）、realistic（现实的）、quote（引用）。"},
+{pairs:[{word:"landlord",meaning:"房东"},{word:"lease",meaning:"租约"},{word:"split",meaning:"分摊"},{word:"typical",meaning:"典型的"},{word:"available",meaning:"可用的"}],explanation:"landlord（房东）、lease（租约）、split（分摊）、typical（典型的）、available（可用的）。"},
+{pairs:[{word:"outline",meaning:"大纲"},{word:"grade",meaning:"成绩"},{word:"sign",meaning:"签署"},{word:"prospect",meaning:"潜在客户"},{word:"distraction",meaning:"干扰"}],explanation:"outline（大纲）、grade（成绩）、sign（签署）、prospect（潜在客户）、distraction（干扰）。"}
+];
+
+// ==================== 游戏状态管理 ====================
+let gameState = {
+  mode: null, currentQuestion: 0, score: 0, correctCount: 0, wrongCount: 0,
+  timeLeft: CONFIG.TOTAL_TIME, timerInterval: null, questions: [],
+  answered: false, matchSelected: null, matchCorrect: 0
+};
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
+
+function goHome() {
+  clearInterval(gameState.timerInterval);
+  showPage('home-page');
+  hideResult();
+}
+
+function initParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 50; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+    container.appendChild(particle);
+  }
+}
+
+function getQuestionBank(mode) {
+  if (currentBank === 'test') {
+    if (mode === 'choice') return testChoiceQuestions;
+    if (mode === 'fill') return testFillQuestions;
+    if (mode === 'match') return testMatchQuestions;
+  } else {
+    if (mode === 'choice') return practiceChoiceQuestions;
+    if (mode === 'fill') return practiceFillQuestions;
+    if (mode === 'match') return practiceMatchQuestions;
+  }
+  return [];
+}
+
+function startGame(mode) {
+  gameState.mode = mode;
+  gameState.currentQuestion = 0;
+  gameState.score = 0;
+  gameState.correctCount = 0;
+  gameState.wrongCount = 0;
+  gameState.timeLeft = CONFIG.TOTAL_TIME;
+  gameState.answered = false;
+  gameState.matchSelected = null;
+  gameState.matchCorrect = 0;
+
+  const bank = getQuestionBank(mode);
+  gameState.questions = shuffleArray([...bank]);
+
+  showCountdown(() => {
+    showPage(mode + '-page');
+    updateStats();
+    showQuestion();
+    startTimer();
+  });
+}
+
+function showCountdown(callback) {
+  const overlay = document.getElementById('countdown-overlay');
+  const numberEl = document.getElementById('countdown-number');
+  overlay.classList.add('show');
+  let count = 3;
+  numberEl.textContent = count;
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      numberEl.textContent = count;
+      numberEl.style.animation = 'none';
+      numberEl.offsetHeight;
+      numberEl.style.animation = 'countPulse 1s ease';
+    } else {
+      clearInterval(interval);
+      overlay.classList.remove('show');
+      callback();
+    }
+  }, 1000);
+}
+
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
+function startTimer() {
+  updateTimerDisplay();
+  gameState.timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    updateTimerDisplay();
+    if (gameState.timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const minutes = Math.floor(gameState.timeLeft / 60);
+  const seconds = gameState.timeLeft % 60;
+  const timeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+  const timerBar = document.getElementById(gameState.mode + '-timer-bar');
+  const timerText = document.getElementById(gameState.mode + '-timer');
+  if (timerText) timerText.textContent = timeStr;
+  if (timerBar) {
+    const percentage = (gameState.timeLeft / CONFIG.TOTAL_TIME) * 100;
+    timerBar.style.width = percentage + '%';
+    if (percentage < 20) {
+      timerBar.classList.add('danger');
+      if (timerText) timerText.classList.add('danger');
+    }
+  }
+}
+
+function updateStats() {
+  const scoreEl = document.getElementById(gameState.mode + '-score');
+  const progressEl = document.getElementById(gameState.mode + '-progress');
+  if (scoreEl) scoreEl.textContent = Math.round(gameState.score) + ' / ' + CONFIG.TOTAL_SCORE;
+  if (progressEl) progressEl.textContent = (gameState.currentQuestion + 1) + ' / ' + gameState.questions.length;
+}
+
+function showQuestion() {
+  gameState.answered = false;
+  const area = document.getElementById(gameState.mode + '-question-area');
+  const explanation = document.getElementById(gameState.mode + '-explanation');
+  if (explanation) explanation.classList.remove('show');
+  if (gameState.mode === 'choice') showChoiceQuestion(area);
+  else if (gameState.mode === 'fill') showFillQuestion(area);
+  else if (gameState.mode === 'match') showMatchQuestion(area);
+  updateStats();
+}
+
+function showChoiceQuestion(area) {
+  const q = gameState.questions[gameState.currentQuestion];
+  const labels = ['A', 'B', 'C', 'D'];
+  let html = '<div class="question-number">题目 ' + (gameState.currentQuestion + 1) + '</div>';
+  html += '<div class="question-text">' + q.question + '</div>';
+  html += '<div class="options-grid">';
+  q.options.forEach((opt, idx) => {
+    html += '<button class="option-btn" onclick="answerChoice(' + idx + ')" id="choice-opt-' + idx + '">';
+    html += '<span class="option-label">' + labels[idx] + '</span>' + opt + '</button>';
+  });
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function showFillQuestion(area) {
+  const q = gameState.questions[gameState.currentQuestion];
+  area.innerHTML = '<div class="question-number">题目 ' + (gameState.currentQuestion + 1) + '</div>' +
+    '<div class="question-text">' + q.question + '</div>' +
+    '<div class="fill-input-group">' +
+    '<input type="text" class="fill-input" id="fill-answer" placeholder="请输入答案..." onkeypress="if(event.key==='Enter')submitFill()">' +
+    '<button class="btn-gold" onclick="submitFill()">提交答案</button></div>';
+  setTimeout(() => { const input = document.getElementById('fill-answer'); if (input) input.focus(); }, 100);
+}
+
+function showMatchQuestion(area) {
+  const q = gameState.questions[gameState.currentQuestion];
+  gameState.matchSelected = null;
+  gameState.matchCorrect = 0;
+  const shuffledWords = shuffleArray([...q.pairs.map((p, i) => ({word: p.word, originalIndex: i}))]);
+  const shuffledMeanings = shuffleArray([...q.pairs.map((p, i) => ({meaning: p.meaning, originalIndex: i}))]);
+  let html = '<div class="question-number">题目 ' + (gameState.currentQuestion + 1) + ' · 请将单词与释义配对</div>';
+  html += '<div class="match-container"><div class="match-column" id="match-words">';
+  shuffledWords.forEach((item) => {
+    html += '<div class="match-item" data-index="' + item.originalIndex + '" data-type="word" onclick="selectMatch(this, ' + item.originalIndex + ', 'word')">' + item.word + '</div>';
+  });
+  html += '</div><div class="match-column" id="match-meanings">';
+  shuffledMeanings.forEach((item) => {
+    html += '<div class="match-item" data-index="' + item.originalIndex + '" data-type="meaning" onclick="selectMatch(this, ' + item.originalIndex + ', 'meaning')">' + item.meaning + '</div>';
+  });
+  html += '</div></div>';
+  html += '<div style="text-align:center;margin-top:15px;"><span style="color:var(--gold);">已配对: <span id="match-count">0</span> / ' + q.pairs.length + '</span></div>';
+  area.innerHTML = html;
+}
+
+function answerChoice(selectedIndex) {
+  if (gameState.answered) return;
+  gameState.answered = true;
+  const q = gameState.questions[gameState.currentQuestion];
+  const isCorrect = selectedIndex === q.answer;
+  document.querySelectorAll('.option-btn').forEach((btn, idx) => {
+    btn.classList.add('disabled');
+    if (idx === q.answer) btn.classList.add('correct');
+    else if (idx === selectedIndex && !isCorrect) btn.classList.add('wrong');
+  });
+  if (isCorrect) {
+    gameState.correctCount++;
+    const bonus = Math.ceil((gameState.timeLeft / CONFIG.TOTAL_TIME) * CONFIG.SPEED_BONUS_MAX);
+    gameState.score += CONFIG.BASE_SCORE_PER_QUESTION + bonus;
+  } else {
+    gameState.wrongCount++;
+  }
+  showExplanation(q.explanation, isCorrect, q.options[q.answer]);
+  updateStats();
+  setTimeout(() => nextQuestion(), 2500);
+}
+
+function submitFill() {
+  if (gameState.answered) return;
+  const input = document.getElementById('fill-answer');
+  const userAnswer = input.value.trim().toLowerCase();
+  if (!userAnswer) return;
+  gameState.answered = true;
+  const q = gameState.questions[gameState.currentQuestion];
+  const correctAnswers = q.answer.toLowerCase().split('/').map(a => a.trim());
+  const isCorrect = correctAnswers.includes(userAnswer);
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.disabled = true;
+  if (isCorrect) {
+    gameState.correctCount++;
+    const bonus = Math.ceil((gameState.timeLeft / CONFIG.TOTAL_TIME) * CONFIG.SPEED_BONUS_MAX);
+    gameState.score += CONFIG.BASE_SCORE_PER_QUESTION + bonus;
+  } else {
+    gameState.wrongCount++;
+  }
+  showExplanation(q.explanation, isCorrect, q.answer);
+  updateStats();
+  setTimeout(() => nextQuestion(), 2500);
+}
+
+function selectMatch(element, index, type) {
+  if (gameState.answered) return;
+  if (element.classList.contains('matched')) return;
+  const q = gameState.questions[gameState.currentQuestion];
+  if (!gameState.matchSelected) {
+    gameState.matchSelected = { element, index, type };
+    element.classList.add('selected');
+  } else {
+    const prev = gameState.matchSelected;
+    if (prev.type === type) {
+      prev.element.classList.remove('selected');
+      gameState.matchSelected = { element, index, type };
+      element.classList.add('selected');
+      return;
+    }
+    const isMatch = prev.index === index;
+    if (isMatch) {
+      prev.element.classList.remove('selected');
+      prev.element.classList.add('matched');
+      element.classList.add('matched');
+      gameState.matchCorrect++;
+      document.getElementById('match-count').textContent = gameState.matchCorrect;
+      if (gameState.matchCorrect === q.pairs.length) {
+        gameState.answered = true;
+        gameState.correctCount++;
+        const bonus = Math.ceil((gameState.timeLeft / CONFIG.TOTAL_TIME) * CONFIG.SPEED_BONUS_MAX);
+        gameState.score += CONFIG.BASE_SCORE_PER_QUESTION + bonus;
+        showExplanation(q.explanation, true, "全部配对正确");
+        updateStats();
+        setTimeout(() => nextQuestion(), 2500);
+      }
+    } else {
+      prev.element.classList.add('wrong-match');
+      element.classList.add('wrong-match');
+      setTimeout(() => {
+        prev.element.classList.remove('selected', 'wrong-match');
+        element.classList.remove('wrong-match');
+      }, 500);
+    }
+    gameState.matchSelected = null;
+  }
+}
+
+function showExplanation(text, isCorrect, correctAnswer) {
+  const explanation = document.getElementById(gameState.mode + '-explanation');
+  const textEl = document.getElementById(gameState.mode + '-explanation-text');
+  const status = isCorrect ? 
+    '<span style="color:var(--green);font-weight:bold;">✓ 回答正确！</span>' : 
+    '<span style="color:var(--red);font-weight:bold;">✗ 回答错误</span>';
+  const answer = correctAnswer ? 
+    '<br><span class="answer-highlight">正确答案：' + correctAnswer + '</span><br><br>' : '';
+  textEl.innerHTML = status + answer + text;
+  explanation.classList.add('show');
+}
+
+function nextQuestion() {
+  gameState.currentQuestion++;
+  if (gameState.currentQuestion >= gameState.questions.length) endGame();
+  else showQuestion();
+}
+
+function endGame() {
+  clearInterval(gameState.timerInterval);
+  gameState.score = Math.min(gameState.score, CONFIG.TOTAL_SCORE);
+  const total = gameState.questions.length;
+  const rate = total > 0 ? Math.round((gameState.correctCount / total) * 100) : 0;
+  document.getElementById('result-score').textContent = Math.round(gameState.score);
+  document.getElementById('result-correct').textContent = gameState.correctCount;
+  document.getElementById('result-wrong').textContent = gameState.wrongCount;
+  document.getElementById('result-rate').textContent = rate + '%';
+  const titleEl = document.getElementById('result-title');
+  if (gameState.score >= 90) titleEl.textContent = '🏆 传奇王者！';
+  else if (gameState.score >= 70) titleEl.textContent = '⭐ 荣耀黄金！';
+  else if (gameState.score >= 50) titleEl.textContent = '⚔️ 倔强青铜！';
+  else titleEl.textContent = '💪 继续加油！';
+  document.getElementById('result-overlay').classList.add('show');
+}
+
+function hideResult() {
+  document.getElementById('result-overlay').classList.remove('show');
+}
+
+function restartGame() {
+  hideResult();
+  startGame(gameState.mode);
+}
+
+window.onload = function() { initParticles(); };
+</script>
+</body>
+</html>
